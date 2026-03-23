@@ -7,7 +7,8 @@ exports.getTransactions = async (req, res) => {
     const { type, startDate, endDate, minAmount, maxAmount, sortBy, order, page = 1, limit = 10 } = req.query;
 
     // 1. Build Query Object (Ensures user only sees their own data)
-    let query = { user: req.user };
+    // Using req.user._id to ensure we match the ID from the protect middleware
+    let query = { user: req.user._id }; 
 
     // Filtering by Type
     if (type && type !== 'all') query.type = type;
@@ -61,7 +62,7 @@ exports.addTransaction = async (req, res) => {
       type,
       category,
       date: date || Date.now(),
-      user: req.user // Attached from auth middleware
+      user: req.user._id // Attached from auth middleware
     });
 
     res.status(201).json(transaction);
@@ -76,10 +77,13 @@ exports.deleteTransaction = async (req, res) => {
   try {
     const transaction = await Transaction.findById(req.params.id);
 
-    if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
+    if (!transaction) {
+      return res.status(404).json({ message: 'Transaction not found' });
+    }
 
     // Check if transaction belongs to user
-    if (transaction.user.toString() !== req.user.toString()) {
+    // We compare strings to avoid object-comparison issues
+    if (transaction.user.toString() !== req.user._id.toString()) {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
