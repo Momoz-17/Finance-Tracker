@@ -9,12 +9,18 @@ function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
 
   useEffect(() => {
-    const checkToken = () => {
+    // Listen for manual logins/logouts within the same tab
+    const handleAuthChange = () => {
       setToken(localStorage.getItem('token'));
     };
     
-    window.addEventListener('storage', checkToken);
-    return () => window.removeEventListener('storage', checkToken);
+    window.addEventListener('auth-change', handleAuthChange);
+    window.addEventListener('storage', handleAuthChange);
+    
+    return () => {
+      window.removeEventListener('auth-change', handleAuthChange);
+      window.removeEventListener('storage', handleAuthChange);
+    };
   }, []);
 
   const isAuthenticated = !!token;
@@ -22,12 +28,13 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-slate-50">
-        <Navbar />
+        {/* Pass isAuthenticated to Navbar to show/hide logout button */}
+        <Navbar isAuthenticated={isAuthenticated} setToken={setToken} />
         <main>
           <Routes>
             <Route 
               path="/auth" 
-              element={!isAuthenticated ? <Auth /> : <Navigate to="/" replace />} 
+              element={!isAuthenticated ? <Auth setToken={setToken} /> : <Navigate to="/" replace />} 
             />
 
             <Route 
@@ -40,6 +47,7 @@ function App() {
               element={isAuthenticated ? <Profile /> : <Navigate to="/auth" replace />} 
             />
 
+            {/* Catch-all route */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
