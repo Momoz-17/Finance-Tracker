@@ -202,7 +202,7 @@ const Auth = () => {
           {mode === 'signin' && (
             <>
               <button onClick={() => { setMode('forget'); setServerError(""); setSuccessMessage(""); }} className="text-sm text-indigo-600 font-medium hover:underline">Forgot Password?</button>
-              <p className="text-sm text-slate-500">Don't have an account? <button onClick={() => { setMode('signup'); setServerError(""); setSuccessMessage(""); }} className="text-indigo-600 font-semibold">Sign Up</button></p>
+              <p className="text-sm text-slate-500">Don't have an account? <button onClick={() => { setMode('signup'); setServerError(""); setSuccessMessage(""); reset(); }} className="text-indigo-600 font-semibold">Sign Up</button></p>
             </>
           )}
           {mode === 'signup' && (

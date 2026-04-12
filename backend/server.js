@@ -12,7 +12,8 @@ connectDB();
 app.use(cors({
   origin: 'https://finance-tracker-1-qawj.onrender.com', 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 app.use(express.json()); 
 
