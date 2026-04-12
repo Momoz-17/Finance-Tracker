@@ -10,7 +10,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: 'https://finance-tracker-1-qawj.onrender.com/auth', 
+  origin: 'https://finance-tracker-1-qawj.onrender.com', 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));

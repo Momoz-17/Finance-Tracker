@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'https://finance-tracker-i7lz.onrender.com/api', // Your backend URL
+  baseURL: 'https://finance-tracker-i7lz.onrender.com', // Your backend URL
 });
 
 // This "Interceptor" automatically attaches your Token to every request
