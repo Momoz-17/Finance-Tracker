@@ -10,6 +10,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
+  // Port 5173 is the default for Vite/React local development
   origin: 'https://finance-tracker-1-qawj.onrender.com', 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -17,7 +18,7 @@ app.use(cors({
 }));
 app.use(express.json()); 
 
-// Routes - Using inline require for cleaner organization
+// Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/transactions', require('./routes/transactionRoutes'));
 

@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const API = axios.create({
-  // Add '/api' to the end of the URL
-  baseURL: 'https://finance-tracker-i7lz.onrender.com/api', 
+  // Your backend runs on 5000, your frontend on 5173
+  baseURL: 'https://finance-tracker-i7lz.onrender.com', 
 });
 
 API.interceptors.request.use((req) => {

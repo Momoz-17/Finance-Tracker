@@ -8,7 +8,6 @@ const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
 // --- FIX 1: Enhanced sendOTP for Profile Security ---
 exports.sendOTP = async (req, res) => {
   try {
-    // Ensure the authMiddleware has populated req.user
     if (!req.user || !req.user.id) {
       return res.status(401).json({ message: "Not authorized, no user ID found" });
     }
@@ -20,6 +19,8 @@ exports.sendOTP = async (req, res) => {
     user.otp = otp;
     user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 mins
     await user.save();
+
+    console.log(`[Local Debug] Sending Password Change OTP to: ${user.email}`);
 
     await sendEmail({
       email: user.email,
@@ -74,7 +75,9 @@ exports.signup = async (req, res) => {
   try {
     const { username, email, password } = req.body;
     let user = await User.findOne({ email });
-    if (user) return res.status(400).json({ message: "User already exists" });
+    
+    // Safety check for existing user
+    if (user) return res.status(400).json({ message: "User already exists with this email." });
 
     const otp = generateOTP();
     const otpExpires = Date.now() + 10 * 60 * 1000; 
@@ -82,19 +85,23 @@ exports.signup = async (req, res) => {
     user = new User({ username, email, password, otp, otpExpires });
     await user.save();
 
+    console.log(`[Local Debug] Signup OTP generated for ${email}: ${otp}`);
+
     try {
       await sendEmail({
         email: user.email,
         subject: 'Your Verification Code',
-        message: `Your OTP for Finance Tracker is:`,
+        message: `Welcome to Finance Tracker! Your verification code is:`,
         otp: otp
       });
       return res.status(201).json({ message: "OTP sent to email. Please verify." });
     } catch (err) {
+      console.error("Signup Email Error:", err);
+      // Don't delete the user, but reset OTP so they can try "Forgot Password" or "Resend" later
       user.otp = undefined;
       user.otpExpires = undefined;
       await user.save();
-      return res.status(500).json({ message: "Email could not be sent" });
+      return res.status(500).json({ message: "User created, but email failed. Try Reset Password to verify." });
     }
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -127,11 +134,15 @@ exports.signin = async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
 
-    if (!user) return res.status(404).json({ message: "User not found" });
-    if (!user.isVerified) return res.status(401).json({ message: "Please verify email first." });
+    if (!user) return res.status(404).json({ message: "No account found with this email." });
+    
+    // Check verification status
+    if (!user.isVerified) {
+      return res.status(401).json({ message: "Please verify your email before logging in." });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch) return res.status(400).json({ message: "Invalid email or password." });
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
@@ -148,27 +159,29 @@ exports.forgetPassword = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: "No user found with this email." });
 
     const otp = generateOTP();
     user.otp = otp;
     user.otpExpires = Date.now() + 10 * 60 * 1000;
     await user.save();
 
+    console.log(`[Local Debug] Reset OTP for ${email}: ${otp}`);
+
     await sendEmail({
       email: user.email,
       subject: 'Password Reset OTP',
-      message: `Your reset OTP is:`,
+      message: `You requested a password reset. Your code is:`,
       otp: otp
     });
 
     return res.status(200).json({ message: "Reset OTP sent to email" });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("Forget Password Email Error:", error);
+    return res.status(500).json({ message: "Could not send reset email." });
   }
 };
 
-// --- FIX 2: Resolved 'res' linter warning by using the response message ---
 exports.resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
@@ -182,10 +195,11 @@ exports.resetPassword = async (req, res) => {
     user.password = newPassword;
     user.otp = undefined;
     user.otpExpires = undefined;
+    // Ensure user is verified if they reset their password successfully
+    user.isVerified = true; 
     await user.save();
 
-    // Directly returning the response instead of assigning to unused variable
-    return res.status(200).json({ message: "Password reset successful!" });
+    return res.status(200).json({ message: "Password reset successful! You can now log in." });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
