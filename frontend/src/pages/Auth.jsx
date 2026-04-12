@@ -12,6 +12,8 @@ const Auth = () => {
   const navigate = useNavigate();
 
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm();
+  
+  // Keep track of the email even if the input is hidden in OTP mode
   const userEmail = watch("email");
 
   const onSubmit = async (data) => {
@@ -26,7 +28,7 @@ const Auth = () => {
           email: data.email,
           password: data.password
         });
-        setSuccessMessage(resData.message);
+        setSuccessMessage(resData.message || "OTP sent to your email!");
         setMode('otp'); 
       } 
       else if (mode === 'otp') {
@@ -34,37 +36,48 @@ const Auth = () => {
           email: userEmail,
           otp: data.otp
         });
-        setSuccessMessage(resData.message);
+        setSuccessMessage(resData.message || "Account verified!");
         setMode('signin');
+        reset(); // Clear OTP field
       } 
       else if (mode === 'signin') {
         const { data: resData } = await API.post('/auth/signin', {
           email: data.email,
           password: data.password
         });
+        
+        // Success: store data and redirect
         localStorage.setItem('token', resData.token);
         localStorage.setItem('user', JSON.stringify(resData.user));
         window.dispatchEvent(new Event("storage")); 
         navigate('/');
       }
       else if (mode === 'forget') {
-        await API.post('/auth/forget-password', { email: data.email });
-        setSuccessMessage("OTP sent to your email!");
+        const { data: resData } = await API.post('/auth/forget-password', { email: data.email });
+        setSuccessMessage(resData.message || "OTP sent to your email!");
         setMode('reset');
       }
       else if (mode === 'reset') {
-        await API.post('/auth/reset-password', {
+        const { data: resData } = await API.post('/auth/reset-password', {
           email: userEmail,
           otp: data.otp,
           newPassword: data.newPassword
         });
-        alert("Password updated successfully!");
+        alert(resData.message || "Password updated successfully!");
         setMode('signin');
         reset();
       }
     } catch (err) {
-      setServerError(err.response?.data?.message || "An error occurred. Please try again.");
+      // Handle the 401 (Not Verified) or 500 (Server Crash) errors
+      const errorMsg = err.response?.data?.message || "Server error. Please check your internet or try again later.";
+      setServerError(errorMsg);
+      
+      // If signin fails because user isn't verified, move them to OTP automatically
+      if (mode === 'signin' && err.response?.status === 401 && errorMsg.toLowerCase().includes("verify")) {
+        setMode('otp');
+      }
     } finally {
+      // This ensures the button stops loading even if an error occurs
       setLoading(false);
     }
   };
@@ -130,7 +143,7 @@ const Auth = () => {
 
           {(mode === 'otp' || mode === 'reset') && (
             <div>
-               <p className="text-sm text-slate-500 mb-2 text-center">Enter the code sent to {userEmail}</p>
+               <p className="text-sm text-slate-500 mb-2 text-center">Enter the code sent to <span className="font-semibold text-slate-700">{userEmail}</span></p>
                <div className="relative">
                 <ShieldCheck className="absolute left-3 top-3.5 text-slate-400" size={18} />
                 <input 
@@ -201,15 +214,15 @@ const Auth = () => {
         <div className="mt-8 pt-6 border-t border-slate-50 text-center space-y-3">
           {mode === 'signin' && (
             <>
-              <button onClick={() => { setMode('forget'); setServerError(""); setSuccessMessage(""); }} className="text-sm text-indigo-600 font-medium hover:underline">Forgot Password?</button>
-              <p className="text-sm text-slate-500">Don't have an account? <button onClick={() => { setMode('signup'); setServerError(""); setSuccessMessage(""); reset(); }} className="text-indigo-600 font-semibold">Sign Up</button></p>
+              <button type="button" onClick={() => { setMode('forget'); setServerError(""); setSuccessMessage(""); }} className="text-sm text-indigo-600 font-medium hover:underline">Forgot Password?</button>
+              <p className="text-sm text-slate-500">Don't have an account? <button type="button" onClick={() => { setMode('signup'); setServerError(""); setSuccessMessage(""); reset(); }} className="text-indigo-600 font-semibold">Sign Up</button></p>
             </>
           )}
           {mode === 'signup' && (
-            <p className="text-sm text-slate-500">Already have an account? <button onClick={() => { setMode('signin'); setServerError(""); setSuccessMessage(""); }} className="text-indigo-600 font-semibold">Sign In</button></p>
+            <p className="text-sm text-slate-500">Already have an account? <button type="button" onClick={() => { setMode('signin'); setServerError(""); setSuccessMessage(""); }} className="text-indigo-600 font-semibold">Sign In</button></p>
           )}
           {(mode === 'forget' || mode === 'otp' || mode === 'reset') && (
-            <button onClick={() => { setMode('signin'); setServerError(""); setSuccessMessage(""); }} className="text-sm text-indigo-600 font-medium">Back to Login</button>
+            <button type="button" onClick={() => { setMode('signin'); setServerError(""); setSuccessMessage(""); }} className="text-sm text-indigo-600 font-medium">Back to Login</button>
           )}
         </div>
       </div>
