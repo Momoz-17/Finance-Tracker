@@ -3,16 +3,21 @@ const router = express.Router();
 const { 
     getTransactions, 
     addTransaction, 
-    deleteTransaction 
+    deleteTransaction,
+    downloadMonthlyPDF 
 } = require('../controllers/transactionController');
 const { protect } = require('../middleware/authMiddleware');
 
-// All routes here are protected
+// Base protected collection routes
 router.route('/')
     .get(protect, getTransactions)
     .post(protect, addTransaction);
 
-// Adding the delete route specifically for ID-based requests
+// Specific static route - MUST be placed before the dynamic /:id route
+router.route('/archive/download')
+    .get(protect, downloadMonthlyPDF);
+
+// Dynamic parameter route
 router.route('/:id')
     .delete(protect, deleteTransaction);
 

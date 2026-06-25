@@ -1,19 +1,18 @@
 import axios from 'axios';
 
 const API = axios.create({
-  // LOCAL URL
+  // Adjust base URL depending on local development or your live Render backend URL
   baseURL: 'http://localhost:5000/api', 
-  
-  // PRODUCTION URL (Commented out for now)
-  // baseURL: 'https://finance-tracker-i7lz.onrender.com/api', 
+  withCredentials: true,
 });
 
-API.interceptors.request.use((req) => {
-  const token = localStorage.getItem('token');
+// Automatically inject JWT token into requests
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token'); // match where you store your token on login
   if (token) {
-    req.headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = `Bearer ${token}`;
   }
-  return req;
+  return config;
 });
 
 export default API;

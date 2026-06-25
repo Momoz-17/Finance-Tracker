@@ -9,7 +9,7 @@ import {
   Tag, 
   Calendar 
 } from 'lucide-react';
-import API from '../api/axios'; //
+import API from '../api/axios';
 
 const TransactionForm = ({ onTransactionAdded }) => {
   const [loading, setLoading] = useState(false);
@@ -35,18 +35,16 @@ const TransactionForm = ({ onTransactionAdded }) => {
     setStatusMsg({ type: '', text: '' });
     
     try {
-      // parseFloat ensures the backend receives a Number, matching your Schema
       const response = await API.post('/transactions', {
         ...data,
         amount: parseFloat(data.amount)
       });
 
       if (response.status === 201) {
-        reset(defaultValues); // Reset to defaults including today's date
+        reset(defaultValues);
         setStatusMsg({ type: 'success', text: 'Transaction added successfully!' });
         if (onTransactionAdded) onTransactionAdded(); 
         
-        // Clear success message after 3 seconds
         setTimeout(() => setStatusMsg({ type: '', text: '' }), 3000);
       }
     } catch (error) {
@@ -64,7 +62,7 @@ const TransactionForm = ({ onTransactionAdded }) => {
           <PlusCircle className="text-indigo-600" size={20} /> Add New Transaction
         </h2>
         {statusMsg.text && (
-          <span className={`text-xs font-medium px-3 py-1 rounded-full animate-fade-in ${
+          <span className={`text-xs font-medium px-3 py-1 rounded-full ${
             statusMsg.type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
           }`}>
             {statusMsg.text}
@@ -73,13 +71,12 @@ const TransactionForm = ({ onTransactionAdded }) => {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 items-start">
-        
         {/* Type Selection */}
         <div className="space-y-1">
           <label className="text-xs font-semibold text-slate-500 uppercase ml-1">Type</label>
           <select 
             {...register("type", { required: "Required" })}
-            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm transition-all"
+            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm transition-all cursor-pointer"
           >
             <option value="income">Income</option>
             <option value="expense">Expense</option>
@@ -107,7 +104,7 @@ const TransactionForm = ({ onTransactionAdded }) => {
             <Tag className="absolute left-3 top-3 text-slate-400" size={18} />
             <select 
               {...register("category")}
-              className="pl-10 w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm transition-all"
+              className="pl-10 w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm transition-all cursor-pointer"
             >
               <option value="General">General</option>
               <option value="Food">Food</option>
@@ -145,7 +142,7 @@ const TransactionForm = ({ onTransactionAdded }) => {
             <input 
               type="date" 
               {...register("date", { required: "Required" })}
-              className="pl-10 w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm transition-all" 
+              className="pl-10 w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm transition-all cursor-pointer" 
             />
           </div>
         </div>
@@ -155,7 +152,7 @@ const TransactionForm = ({ onTransactionAdded }) => {
           <button 
             disabled={loading}
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-bold py-2.5 rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center min-h-[44px] text-sm"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-bold py-2.5 rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center min-h-[44px] text-sm cursor-pointer"
           >
             {loading ? <Loader2 className="animate-spin" size={20} /> : "Add Entry"}
           </button>
